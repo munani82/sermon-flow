@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, Pressable, ScrollView, TextInput } from 'react-native';
+import { View, StyleSheet, Text, Pressable, ScrollView, TextInput, useColorScheme } from 'react-native';
 import { BookOpen, Sparkles, Search, Check, RefreshCw } from 'lucide-react-native';
 import { searchBible } from '@/services/bibleDb';
 import { analyzePassage } from '@/services/gemini';
@@ -7,8 +7,8 @@ import { analyzePassage } from '@/services/gemini';
 interface BibleSidebarProps {
   detectedVerses: Array<{ reference: string; text: string }>;
   onInsertVerse: (verseText: string) => void;
-  translation: 'KRV' | 'RNKSV';
-  onTranslationChange: (val: 'KRV' | 'RNKSV') => void;
+  translation: 'OFFLINE' | 'KRV' | 'RNKSV';
+  onTranslationChange: (val: 'OFFLINE' | 'KRV' | 'RNKSV') => void;
 }
 
 interface BibleSearchResult {
@@ -25,6 +25,8 @@ export default function BibleSidebar({
   translation,
   onTranslationChange,
 }: BibleSidebarProps) {
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
   const [activeTab, setActiveTab] = useState<'preview' | 'search' | 'ai'>('preview');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
@@ -69,23 +71,23 @@ export default function BibleSidebar({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDarkMode && { backgroundColor: '#1E293B' }]}>
       {/* 탭 헤더 */}
-      <View style={styles.tabHeader}>
+      <View style={[styles.tabHeader, isDarkMode && { borderBottomColor: '#334155' }]}>
         <Pressable
           onPress={() => setActiveTab('preview')}
           style={[styles.tabButton, activeTab === 'preview' && styles.activeTabButton]}
         >
-          <BookOpen size={16} color={activeTab === 'preview' ? '#007AFF' : '#64748B'} />
-          <Text style={[styles.tabText, activeTab === 'preview' && styles.activeTabText]}>본문 미리보기</Text>
+          <BookOpen size={16} color={activeTab === 'preview' ? (isDarkMode ? '#38BDF8' : '#007AFF') : '#64748B'} />
+          <Text style={[styles.tabText, activeTab === 'preview' && (isDarkMode ? { color: '#38BDF8' } : styles.activeTabText)]}>본문 미리보기</Text>
         </Pressable>
 
         <Pressable
           onPress={() => setActiveTab('search')}
           style={[styles.tabButton, activeTab === 'search' && styles.activeTabButton]}
         >
-          <Search size={16} color={activeTab === 'search' ? '#007AFF' : '#64748B'} />
-          <Text style={[styles.tabText, activeTab === 'search' && styles.activeTabText]}>성경 검색</Text>
+          <Search size={16} color={activeTab === 'search' ? (isDarkMode ? '#38BDF8' : '#007AFF') : '#64748B'} />
+          <Text style={[styles.tabText, activeTab === 'search' && (isDarkMode ? { color: '#38BDF8' } : styles.activeTabText)]}>성경 검색</Text>
         </Pressable>
 
         <Pressable
@@ -93,25 +95,40 @@ export default function BibleSidebar({
           style={[styles.tabButton, activeTab === 'ai' && styles.activeTabButton]}
         >
           <Sparkles size={16} color={activeTab === 'ai' ? '#FF9500' : '#64748B'} />
-          <Text style={[styles.tabText, activeTab === 'ai' && styles.activeTabAiText]}>AI 해설</Text>
+          <Text style={[styles.tabText, activeTab === 'ai' && (isDarkMode ? { color: '#FFB03A' } : styles.activeTabAiText)]}>AI 해설</Text>
         </Pressable>
       </View>
 
       {/* 설정 바: 번역본 선택 */}
-      <View style={styles.settingsBar}>
-        <Text style={styles.settingsLabel}>역본 선택</Text>
-        <View style={styles.toggleGroup}>
+      <View style={[styles.settingsBar, isDarkMode && { borderBottomColor: '#334155' }]}>
+        <Text style={[styles.settingsLabel, isDarkMode && { color: '#94A3B8' }]}>역본 선택</Text>
+        <View style={[styles.toggleGroup, isDarkMode && { backgroundColor: '#334155' }]}>
+          <Pressable
+            onPress={() => onTranslationChange('OFFLINE')}
+            style={[styles.toggleButton, translation === 'OFFLINE' && (isDarkMode ? { backgroundColor: '#475569' } : styles.activeToggleButton)]}
+          >
+            <Text style={[
+              styles.toggleText,
+              translation === 'OFFLINE' ? (isDarkMode ? { color: '#F8FAFC' } : styles.activeToggleText) : (isDarkMode ? { color: '#94A3B8' } : null)
+            ]}>개역한글 (오프라인)</Text>
+          </Pressable>
           <Pressable
             onPress={() => onTranslationChange('KRV')}
-            style={[styles.toggleButton, translation === 'KRV' && styles.activeToggleButton]}
+            style={[styles.toggleButton, translation === 'KRV' && (isDarkMode ? { backgroundColor: '#475569' } : styles.activeToggleButton)]}
           >
-            <Text style={[styles.toggleText, translation === 'KRV' && styles.activeToggleText]}>개역개정</Text>
+            <Text style={[
+              styles.toggleText,
+              translation === 'KRV' ? (isDarkMode ? { color: '#F8FAFC' } : styles.activeToggleText) : (isDarkMode ? { color: '#94A3B8' } : null)
+            ]}>개역개정 (온라인)</Text>
           </Pressable>
           <Pressable
             onPress={() => onTranslationChange('RNKSV')}
-            style={[styles.toggleButton, translation === 'RNKSV' && styles.activeToggleButton]}
+            style={[styles.toggleButton, translation === 'RNKSV' && (isDarkMode ? { backgroundColor: '#475569' } : styles.activeToggleButton)]}
           >
-            <Text style={[styles.toggleText, translation === 'RNKSV' && styles.activeToggleText]}>새번역</Text>
+            <Text style={[
+              styles.toggleText,
+              translation === 'RNKSV' ? (isDarkMode ? { color: '#F8FAFC' } : styles.activeToggleText) : (isDarkMode ? { color: '#94A3B8' } : null)
+            ]}>새번역 (온라인)</Text>
           </Pressable>
         </View>
       </View>
@@ -121,19 +138,19 @@ export default function BibleSidebar({
         {activeTab === 'preview' && (
           <View>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>자동 감지된 성경 구절 ({detectedVerses.length})</Text>
-              <Text style={styles.sectionSubtitle}>노트 작성 중 본문 참조가 감지되면 자동으로 로드됩니다.</Text>
+              <Text style={[styles.sectionTitle, isDarkMode && { color: '#F1F5F9' }]}>자동 감지된 성경 구절 ({detectedVerses.length})</Text>
+              <Text style={[styles.sectionSubtitle, isDarkMode && { color: '#94A3B8' }]}>노트 작성 중 본문 참조가 감지되면 자동으로 로드됩니다.</Text>
             </View>
 
             {detectedVerses.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>에디터에 '요 3:16' 또는 '창 1:1'과 같이 구절을 입력해보세요.</Text>
+                <Text style={[styles.emptyText, isDarkMode && { color: '#64748B' }]}>에디터에 '요 3:16' 또는 '창 1:1'과 같이 구절을 입력해보세요.</Text>
               </View>
             ) : (
               detectedVerses.map((verse, index) => (
-                <View key={index} style={styles.verseCard}>
+                <View key={index} style={[styles.verseCard, isDarkMode && { backgroundColor: '#334155', borderColor: '#475569' }]}>
                   <View style={styles.verseHeader}>
-                    <Text style={styles.verseReference}>{verse.reference} ({translation === 'KRV' ? '개역개정' : '새번역'})</Text>
+                    <Text style={styles.verseReference}>{verse.reference} ({translation === 'OFFLINE' ? '개역한글' : translation === 'KRV' ? '개역개정' : '새번역'})</Text>
                     <Pressable
                       onPress={() => onInsertVerse(`\n[${verse.reference}] ${verse.text}\n`)}
                       style={styles.insertButton}
@@ -142,7 +159,7 @@ export default function BibleSidebar({
                       <Text style={styles.insertButtonText}>본문 삽입</Text>
                     </Pressable>
                   </View>
-                  <Text style={styles.verseText}>{verse.text}</Text>
+                  <Text style={[styles.verseText, isDarkMode && { color: '#E2E8F0' }]}>{verse.text}</Text>
                 </View>
               ))
             )}
@@ -151,10 +168,10 @@ export default function BibleSidebar({
 
         {activeTab === 'search' && (
           <View>
-            <View style={styles.searchBar}>
+            <View style={[styles.searchBar, isDarkMode && { backgroundColor: '#334155', borderColor: '#475569' }]}>
               <Search size={18} color="#94A3B8" style={styles.searchIcon} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, isDarkMode && { color: '#F1F5F9' }]}
                 placeholder="장, 절 또는 키워드 검색 (예: 요 3:16, 사랑)"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -164,13 +181,13 @@ export default function BibleSidebar({
 
             {searchResults.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>검색 결과가 없습니다. (예: '요 3:16', '사랑', '태초')</Text>
+                <Text style={[styles.emptyText, isDarkMode && { color: '#64748B' }]}>검색 결과가 없습니다. (예: '요 3:16', '사랑', '태초')</Text>
               </View>
             ) : (
               searchResults.map((verse, index) => {
                 const refString = `${verse.bookFull} ${verse.chapter}:${verse.verse}`;
                 return (
-                  <View key={index} style={styles.verseCard}>
+                  <View key={index} style={[styles.verseCard, isDarkMode && { backgroundColor: '#334155', borderColor: '#475569' }]}>
                     <View style={styles.verseHeader}>
                       <Text style={styles.verseReference}>{refString}</Text>
                       <Pressable
@@ -181,7 +198,7 @@ export default function BibleSidebar({
                         <Text style={styles.insertButtonText}>본문 삽입</Text>
                       </Pressable>
                     </View>
-                    <Text style={styles.verseText}>{verse.content}</Text>
+                    <Text style={[styles.verseText, isDarkMode && { color: '#E2E8F0' }]}>{verse.content}</Text>
                   </View>
                 );
               })
@@ -193,9 +210,9 @@ export default function BibleSidebar({
           <View>
             <View style={styles.aiHeader}>
               <Sparkles size={20} color="#FF9500" />
-              <Text style={styles.aiTitle}>Gemini 신학적 배경 설명</Text>
+              <Text style={[styles.aiTitle, isDarkMode && { color: '#F1F5F9' }]}>Gemini 신학적 배경 설명</Text>
             </View>
-            <Text style={styles.aiSubtitle}>
+            <Text style={[styles.aiSubtitle, isDarkMode && { color: '#94A3B8' }]}>
               현재 감지되었거나 선택된 성경 구절의 주석, 신학적 해석, 역사적 배경을 AI가 정교하게 요약 분석합니다.
             </Text>
 
@@ -218,8 +235,8 @@ export default function BibleSidebar({
             </Pressable>
 
             {aiAnalysis && (
-              <View style={styles.aiCard}>
-                <Text style={styles.aiAnalysisText}>{aiAnalysis}</Text>
+              <View style={[styles.aiCard, isDarkMode && { backgroundColor: '#3B3A2F', borderColor: '#785A15' }]}>
+                <Text style={[styles.aiAnalysisText, isDarkMode && { color: '#FEF3C7' }]}>{aiAnalysis}</Text>
               </View>
             )}
           </View>

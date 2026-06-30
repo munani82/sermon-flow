@@ -44,7 +44,7 @@ export async function analyzePassage(reference: string, passageText: string): Pr
 
   try {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
 
     const prompt = `성경 구절 "${reference}: ${passageText}"에 대해 다음의 세 가지 구조로 정교하게 분석하여 요약해 주세요. 친절하고 신학적인 깊이가 있는 어조를 사용하고 마크다운 포맷으로 작성해 주세요. 
     1. 이 구절이 쓰여진 역사적, 시대적, 지리적 배경
@@ -59,3 +59,39 @@ export async function analyzePassage(reference: string, passageText: string): Pr
     return `[Gemini API 연동 중 오류가 발생했습니다]\n오류 메시지: ${error.message || error}`;
   }
 }
+
+// 실시간 성경 구절 온라인 조회 API (Gemini 활용)
+export async function fetchOnlineVerse(
+  translation: 'KRV' | 'RNKSV',
+  bookFull: string,
+  chapter: number,
+  startVerse: number,
+  endVerse?: number
+): Promise<string | null> {
+  if (!GEMINI_API_KEY) {
+    return null;
+  }
+  try {
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+
+    const translationName = translation === 'KRV' ? '개역개정' : '새번역';
+    const rangeStr = endVerse && endVerse > startVerse ? `${startVerse}-${endVerse}절` : `${startVerse}절`;
+    const prompt = `성경 "${bookFull} ${chapter}장 ${rangeStr}"의 [${translationName}] 번역본 본문만 딱 출력해 주세요.
+    
+    [핵심 규칙]
+    1. 어떠한 앞뒤 설명(예: "네, 성경 구절입니다" 등)이나 따옴표, 마크다운 기호 없이 오직 성경 본문 텍스트만 한 줄로 출력해 주세요.
+    2. 여러 절인 경우, 절 번호를 붙여서 출력해 주세요 (예: "1절 태초에... 2절 땅이...").
+    3. 구절이 존재하지 않는다면 정확히 "존재하지 않음"이라고만 출력해 주세요.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text().trim();
+    if (text === '존재하지 않음') return null;
+    return text;
+  } catch (error) {
+    console.error('Gemini 성경 구절 실시간 조회 실패:', error);
+    return null;
+  }
+}
+
